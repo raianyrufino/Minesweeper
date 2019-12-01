@@ -1,23 +1,26 @@
 :- use_module(library(clpfd)).
 
-% swipl -q -f campo_minado.pl
-% jogar(numDeColunas, numDeLinhas).
+% swipl -q -f campo.pl
+% para iniciar o jogo, é necessario chamar a funcao inciar, passando as configuracoes do campo no formato abaixo:
+% iniciar(numDeLinhas, numDecolunas, numDebombas).
+
+% tipos de jogadas:
 % R linha coluna = revela essa posição
 % F linha coluna = marca
 % ? linha coluna = interrogação
 
-jogar(Linhas,Colunas,NBombas) :-
+iniciar(Linhas,Colunas,NBombas) :-
 	format('
-Bem vindo ao campo minado!
-Regras:
-: R X Y  Revela, exemplo: R 1 2 - Revela posição 1(linha) 2(coluna).
-: ? X Y  Interrogação: ? 1 2 - Insere uma ? na posição 1(linha) 2(coluna).
-: F X Y  Flag, exemplo: B 1 2 - Insere uma flag na posicao 1(linha) 2(coluna). 
+			Bem vindo ao campo minado!
 
-Qualquer outra coisa para sair do jogo
+	Tipos de jogadas:
+		R X Y  Revela, exemplo: R 1 2 - Revela posição 1(linha) 2(coluna).
+		? X Y  Interrogação, exemplo: ? 1 2 - Insere uma ? na posição 1(linha) 2(coluna).
+		F X Y  Flag, exemplo: F 1 2 - Insere uma flag na posicao 1(linha) 2(coluna). 
+		Qualquer outra coisa ou Ctrl + Z para sair do jogo.
 
-Obs.: para vencer, você deve revelar todas as posições que não contém uma bomba,
-      e indentificar todas as bombas com a marcação.
+	Obs.: para vencer, você deve revelar todas as posições que não contém uma bomba,
+		e indentificar todas as bombas com a marcação de bandeira (F).
 		
 '),
 	gera_campo(Colunas, Linhas, NBombas, Campo),
@@ -28,35 +31,35 @@ Obs.: para vencer, você deve revelar todas as posições que não contém uma b
 jogar(Campo) :- % jogador venceu
 	percorre_campo(venceu, Campo),
 	percorre_campo(imprime_campo, Campo),
-	writeln('Você venceu!
+	writeln('		Você venceu!
 
-Créditos:	
+		Créditos:	
 			
-PLP 2019.2   
-Everton L. G. Alves
-	
-Grupo:   
-Diego Ribeiro de Almeida                          
-Iago Tito Oliveira                             
-Paulo Mateus Alves Moreira                           
-Raiany Rufino Costa da Paz
+	PLP 2019.2   
+	Everton L. G. Alves
+		
+	Grupo:   
+	Diego Ribeiro de Almeida                          
+	Iago Tito Oliveira                             
+	Paulo Mateus Alves Moreira                           
+	Raiany Rufino Costa da Paz
 		').
 
 jogar(Campo) :- % jogador perdeu
 	\+ percorre_campo(jogando, Campo),
 	percorre_campo(imprime_campo, Campo),
-	writeln('Você perdeu!
+	writeln('		Você perdeu!
 
-Créditos:	
-			
-PLP 2019.2   
-Everton L. G. Alves
-	
-Grupo:   
-Diego Ribeiro de Almeida                          
-Iago Tito Oliveira                             
-Paulo Mateus Alves Moreira                           
-Raiany Rufino Costa da Paz
+		Créditos:	
+				
+	PLP 2019.2   
+	Everton L. G. Alves
+		
+	Grupo:   
+	Diego Ribeiro de Almeida                          
+	Iago Tito Oliveira                             
+	Paulo Mateus Alves Moreira                           
+	Raiany Rufino Costa da Paz
 		').
 
 jogar(Campo) :- % jogador nem venceu nem perdeu
@@ -106,16 +109,16 @@ gera_linhas([H|T], Linhas, [H|L], Resto) :-
 calcula_bombas_adjacentes(_, _, _, P, posicao('+',P)) :- P =@= 'P'.
 calcula_bombas_adjacentes(Campo, coordenada(X,Y), D, Posicao, posicao('+',NumBombas)) :-
 	dif(Posicao, 'P'),
-	findall(coordenada(Ay,Ax), (
-		posicoes_adjacentes(coordenada(X,Y), D, coordenada(Ay,Ax)),
-		indomain(Ay), indomain(Ax),
-		pega_valor_yx(Campo, coordenada(Ay,Ax), Val),
+	findall(coordenada(Ax,Ay), (
+		posicoes_adjacentes(coordenada(X,Y), D, coordenada(Ax,Ay)),
+		indomain(Ax), indomain(Ay),
+		pega_valor_xy(Campo, coordenada(Ax,Ay), Val),
 		Val =@= 'P'
 	), Bombas),
 	length(Bombas, NumBombas).
 
-imprime_campo(coordenada(X,_), dim(X,_), posicao(P,A), posicao(P,A)) :- format("~w~n", P).
-imprime_campo(coordenada(X,_), dim(Linhas,_), posicao(P,A), posicao(P,A)) :- dif(X,Linhas), format("~w ", P).
+imprime_campo(coordenada(X,_), dim(X,_), posicao(P,A), posicao(P,A)) :- format("  ~w~n", P).
+imprime_campo(coordenada(X,_), dim(Linhas,_), posicao(P,A), posicao(P,A)) :- dif(X,Linhas), format("  ~w ", P).
 
 jogando(_,_,posicao(A,_),_) :- A \= 'B'.
 
@@ -140,31 +143,31 @@ percorre_linhas([Colunas|T], coordenada(X, Y), D, PosicaoFinal, [Posicao|L]) :-
 	succ(X, X1),
 	percorre_linhas(T, coordenada(X1, Y), D, PosicaoFinal, L).
 
-% retorna o valor na posição yx
-pega_valor_yx(campo(_,_,Posicoes), coordenada(X,Y), Val) :-
+% retorna o valor na posição xy
+pega_valor_xy(campo(_,_,Posicoes), coordenada(X,Y), Val) :-
 	nth1(Y, Posicoes, Linha), % nth1 pega a N-ésima posição da lista,
 							  % no caso, a x-ésima posição em Posicoes, que é uma linha
 	nth1(X, Linha, Val). % aqui a y-ésima posição é um valor
 
-% define o valor na posicao yx
-define_yx(campo(Linhas,Colunas,Posicoes), coordenada(X,Y), Val, campo(Linhas,Colunas,NovaPosicao)) :- define_coluna(Posicoes, X, Y, Val, NovaPosicao).
+% define o valor na posicao xy
+define_xy(campo(Linhas,Colunas,Posicoes), coordenada(X,Y), Val, campo(Linhas,Colunas,NovaPosicao)) :- define_coluna(Posicoes, X, Y, Val, NovaPosicao).
 define_coluna([Colunas|T], X, 1, Val, [Linha|T]) :- define_linha(Colunas, X, Val, Linha).
 define_coluna([Colunas|T], X, Y, Val, [Colunas|Nova]) :- dif(Y, 0), succ(Y1, Y), define_coluna(T, X, Y1, Val, Nova).
 define_linha([_|T], 1, Val, [Val|T]).
 define_linha([Colunas|T], X, Val, [Colunas|Nova]) :- dif(X, 0), succ(X1, X), define_linha(T, X1, Val, Nova).
 
 % retorna as posições adjacentes a uma posição
-posicoes_adjacentes(coordenada(X,Y), dim(Linhas,Colunas), coordenada(Ay,Ax)) :-
+posicoes_adjacentes(coordenada(X,Y), dim(Linhas,Colunas), coordenada(Ax,Ay)) :-
 
-	dif(coordenada(X,Y),coordenada(Ay,Ax)),
+	dif(coordenada(X,Y),coordenada(Ax,Ay)),
 
-	Ay in 1..Linhas,
+	Ax in 1..Linhas,
 	Ymin #= X-1, Ymax #= X+1,
-	Ay in Ymin..Ymax,
+	Ax in Ymin..Ymax,
 
-	Ax in 1..Colunas,
+	Ay in 1..Colunas,
 	Xmin #= Y-1, Xmax #= Y+1,
-	Ax in Xmin..Xmax.
+	Ay in Xmin..Xmax.
 
 pega_jogada(Jogada, X, Y) :-
 	read_line_to_codes(user_input, In),
@@ -182,54 +185,54 @@ digit(D) --> [D], { char_type(D, digit) }.
 
 % Jogada de interrogacao
 realiza_jogada(interrogacao, P, C, NovoC) :-
-	pega_valor_yx(C, P, posicao(_,A)),
-	define_yx(C, P, posicao('?',A), NovoC).
+	pega_valor_xy(C, P, posicao(_,A)),
+	define_xy(C, P, posicao('?',A), NovoC).
 
 % Jogada de bandeira
 realiza_jogada(bandeira, P, C, NovoC) :-
-	pega_valor_yx(C, P, posicao(_,A)),
-	define_yx(C, P, posicao('P',A), NovoC).
+	pega_valor_xy(C, P, posicao(_,A)),
+	define_xy(C, P, posicao('P',A), NovoC).
 
 % Jogada de revelar, quando revela uma bomba
 realiza_jogada(revela, P, C, NovoC) :-
-	pega_valor_yx(C, P, posicao(_,'P')),
-	define_yx(C, P, posicao('B','P'), NovoC).
+	pega_valor_xy(C, P, posicao(_,'P')),
+	define_xy(C, P, posicao('B','P'), NovoC).
 
 % Jogada de revelar, quando não revela uma bomba
 realiza_jogada(revela, P, C, NovoC) :-
-	pega_valor_yx(C, P, posicao(_,A)),
+	pega_valor_xy(C, P, posicao(_,A)),
 	dif(A, 'P'),
-	define_yx(C, P, posicao(A,A), NovoC1),
+	define_xy(C, P, posicao(A,A), NovoC1),
 	revela_recursivo(P, NovoC1, NovoC).
 
 % revela recursivo
 revela_recursivo(coordenada(X,Y), campo(Linhas,Colunas,Posicoes), NovoC2) :-
-	findall(coordenada(Ay,Ax), (
-		    posicoes_adjacentes(coordenada(X,Y), dim(Linhas,Colunas), coordenada(Ay,Ax)),
-		    indomain(Ay), indomain(Ax)
+	findall(coordenada(Ax,Ay), (
+		    posicoes_adjacentes(coordenada(X,Y), dim(Linhas,Colunas), coordenada(Ax,Ay)),
+		    indomain(Ax), indomain(Ay)
 		), Coords),
 	revela_recursivo_(Coords, campo(Linhas,Colunas,Posicoes), NovoC2).
 
 revela_recursivo_([], C, C).
 
 revela_recursivo_([Colunas|T], C, NovoC) :-  % se a posição já tiver sido revelada
-	pega_valor_yx(C, Colunas, posicao(A,B)),
+	pega_valor_xy(C, Colunas, posicao(A,B)),
 	member(A, [B,'P']),
 	revela_recursivo_(T, C, NovoC).
 
 revela_recursivo_([Colunas|T], C, NovoC) :- % se a posição for uma bomba, não revela
-	pega_valor_yx(C, Colunas, posicao(_,'P')),
+	pega_valor_xy(C, Colunas, posicao(_,'P')),
 	revela_recursivo_(T, C, NovoC).
 
 revela_recursivo_([Colunas|T], C, NovoC) :- % se a posição tem bombas ao redor
-	pega_valor_yx(C, Colunas, posicao(_,N)),
+	pega_valor_xy(C, Colunas, posicao(_,N)),
 	integer(N),
 	N #> 0,
-	define_yx(C, Colunas, posicao(N,N), NovoC1),
+	define_xy(C, Colunas, posicao(N,N), NovoC1),
 	revela_recursivo_(T, NovoC1, NovoC).
 
 revela_recursivo_([Colunas|T], C, NovoC) :- % não tem bombas ao redor, revela recursivamente
-	pega_valor_yx(C, Colunas, posicao('+',0)),
-	define_yx(C, Colunas, posicao(0,0), NovoC1),
+	pega_valor_xy(C, Colunas, posicao('+',0)),
+	define_xy(C, Colunas, posicao(0,0), NovoC1),
 	revela_recursivo(Colunas, NovoC1, NovoC2),
 	revela_recursivo_(T, NovoC2, NovoC).
